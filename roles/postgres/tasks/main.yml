@@ -1,0 +1,49 @@
+---
+
+- name: Install Postgres
+  action: apt name={{ item }} state=present
+  with_items:
+    - postgresql
+    - postgresql-contrib
+
+- name: Install Ansible Postgres Module Dependencies
+  action: apt name={{ item }} state=present
+  with_items:
+    - libpq-dev
+    - python-psycopg2
+
+- name: Create Database
+  become_user: postgres
+  become_method: sudo
+  postgresql_db: name={{ database_name }}
+                encoding='UTF-8'
+                template='template0'
+
+- name: Create database user and grant db access
+  become_user: postgres
+  become_method: sudo
+  postgresql_user: db={{ database_name }} name={{ database_username }} password={{ database_user_password }}
+
+- name: Start PostgreSQL and enable at boot
+  service: name=postgresql
+          enabled=yes
+          state=started
+
+- name: Ensure PostgreSQL is listening on all localhost
+  lineinfile: dest=/etc/postgresql/10/main/postgresql.conf
+    regexp='^#?listen_addresses\s*='
+    line="listen_addresses = '*'"
+    state=present
+  notify: restart postgresql
+
+- lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf
+              regexp='host\s+all\s+all\s+127.0.0.1/32\s+md5'
+              line='host all all 127.0.0.1/32 md5'
+              insertbefore=BOF
+  notify: restart postgresql
+
+- name: Ensure postgres listens to web server
+  lineinfile:
+    path: /etc/postgresql/10/main/pg_hba.conf
+    insertafter: EOF
+    line: "host all all {{groups['webservers'][0]}}/32 trust"

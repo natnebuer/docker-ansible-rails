@@ -1,0 +1,30 @@
+---
+- name: Make sure we have a 'wheel' group
+  group:
+    name: wheel
+    state: present
+
+- name: Creating Group Deploy
+  group: name=deploy state=present
+
+- name: Allow 'wheel' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    validate: visudo -cf %s
+
+- name: Add deployer as user
+  user: name=deployer
+        shell=/bin/bash
+        createhome=yes
+        groups=wheel,deploy,sudo
+        append=yes
+        password={{ deployer_password }}
+        generate_ssh_key=yes
+        ssh_key_bits=2048
+        ssh_key_file=.ssh/id_rsa
+
+- name: Adding Authorized Keys
+  authorized_key: user=deployer key="{{ lookup('file', '/root/.ssh/id_rsa.pub') }}"

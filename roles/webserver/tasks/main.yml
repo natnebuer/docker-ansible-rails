@@ -1,0 +1,73 @@
+---
+- name: upgrade all packages
+  apt: update_cache=yes
+
+- name: installing GIT
+  apt: name=git state=present
+
+- name: Install Postgres Dependencies
+  action: apt name={{ item }} state=present
+  with_items:
+    - libpq-dev
+    - libxml2-dev
+    - libxslt-dev
+
+- name: Add PGP Dependencies
+  action: apt name={{ item }} state=present
+  with_items:
+    - dirmngr
+    - gnupg
+
+- name: Add an apt key by id from a keyserver
+  apt_key: keyserver=keyserver.ubuntu.com id=561F9B9CAC40B2F7
+
+- name: Add HTTPS support for APT
+  action: apt name={{ item }} state=present
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+
+- name: Adding passenger APT repository
+  apt_repository: repo='deb https://oss-binaries.phusionpassenger.com/apt/passenger bionic main > /etc/apt/sources.list.d/passenger.list' state=present
+
+- name: upgrade all packages to take in newly added passenger repo
+  apt: update_cache=yes
+
+- name: Install Passenger and Nginx
+  action: apt name={{ item }} state=present
+  with_items:
+    - nginx
+    - libnginx-mod-http-passenger
+
+- name: Sending our default nginx.conf over
+  template: src=./../templates/mod-http-passenger.conf dest="/etc/nginx/conf.d/mod-http-passenger.conf"
+
+- name: Removing default nginx.conf
+  file: path="/etc/nginx/nginx.conf" state="absent"
+
+- name: Sending our default nginx.conf over
+  template: src=./../templates/nginx.conf dest="/etc/nginx/nginx.conf"
+
+- name: Restarting nginx
+  service: name=nginx state=restarted
+
+- name: Install Node JS for Rails
+  apt: name=nodejs state=present
+
+- name: Sending our application specific server config
+  template: src=./../templates/nginx_application.conf dest="/etc/nginx/conf.d/{{app_name}}_app.conf"
+
+- name: Creating www directory in var
+  file: path={{ app_path }} state=directory owner=deployer group=deploy mode=0775
+
+- name: set RAILS_ENV
+  lineinfile:
+    path: /etc/environment
+    insertafter: EOF
+    line: 'RAILS_ENV=production'
+
+- name: set RAILS_SERVE_STATIC_FILES
+  lineinfile:
+    path: /etc/environment
+    insertafter: EOF
+    line: 'RAILS_SERVE_STATIC_FILES=1'

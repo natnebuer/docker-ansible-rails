@@ -1,0 +1,37 @@
+---
+- name: Foundation Steps
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+  vars_files:
+    - vars/parameters.yml
+  roles:
+    - users
+
+- name: Building Database
+  hosts: dbservers
+  remote_user: root
+  become: yes
+  become_method: sudo
+  vars_files:
+    - vars/parameters.yml
+  roles:
+    - postgres
+
+- name: Building Web Servers
+  hosts: webservers
+  remote_user: root
+  become: yes
+  become_method: sudo
+  vars_files:
+    - vars/parameters.yml
+  roles:
+    - { role: rvm.ruby,
+        tags: ruby,
+        rvm1_rubies: ['ruby-2.5.1'],
+        rvm1_user: 'deployer',
+        become: yes,
+        become_method: sudo
+      }
+    - webserver

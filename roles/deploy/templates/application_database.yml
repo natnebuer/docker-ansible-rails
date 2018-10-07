@@ -1,0 +1,9 @@
+production:
+  adapter:  postgresql
+  host:     {{ groups['dbservers'][0] }}
+  encoding: unicode
+  database: {{ database_name }}
+  pool:     100
+  username: {{ database_username }}
+  password: {{ database_user_password }}
+  template: template0

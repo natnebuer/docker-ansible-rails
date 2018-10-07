@@ -1,0 +1,23 @@
+#user login password
+deployer_password: encrpyted_secret
+
+#Database details
+database_name: production_db
+database_username: db_user
+database_user_password: db_password
+
+#Rails Env
+rails_environment: production
+
+#app details
+app_name: project_name
+app_path: '/var/www/{{ app_name }}'
+shared_path: '{{ app_path }}/shared'
+releases_path: '{{ app_path }}/releases'
+current_release_path: '{{ app_path }}/current'
+
+#Git
+git_url: your_repo_url
+git_branch: master
+
+keep_releases: 5

@@ -1,0 +1,11 @@
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[webservers]
+192.168.110.123
+
+[dbservers]
+192.168.110.124
+
+[all]
+192.168.110.123
+192.168.110.124
